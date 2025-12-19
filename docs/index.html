@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📮 puttr - Secure Data Posting Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 60px;
+        }
+
+        header h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        header .emoji {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            max-width: 800px;
+            margin: 0 auto 50px;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            font-size: 1.1em;
+            text-align: center;
+            color: #555;
+        }
+
+        section {
+            background: white;
+            margin-bottom: 40px;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #dc3545;
+        }
+
+        section h2 {
+            color: #dc3545;
+            font-size: 2em;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        section h2::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 30px;
+            background: #dc3545;
+            margin-right: 15px;
+            border-radius: 2px;
+        }
+
+        section h3 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-top: 20px;
+        }
+
+        section p {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 4px solid #dc3545;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            font-size: 0.95em;
+            overflow-x: auto;
+            color: #2c3e50;
+        }
+
+        code {
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #dc3545;
+            font-size: 0.95em;
+        }
+
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 4px solid #dc3545;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            font-size: 0.95em;
+            overflow-x: auto;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 25px 0;
+        }
+
+        .example-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .example-box h4 {
+            color: #dc3545;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 25px 0;
+        }
+
+        .feature-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            color: #555;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        .highlight strong {
+            color: #dc3545;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            color: #721c24;
+        }
+
+        .error-box strong {
+            color: #dc3545;
+        }
+
+        .building-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #7f8c8d;
+            font-size: 0.95em;
+        }
+
+        footer p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.5em;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                padding: 25px;
+            }
+
+            section h2 {
+                font-size: 1.6em;
+            }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step {
+            display: flex;
+            margin: 25px 0;
+            align-items: flex-start;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .token-response {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px 20px;
+            border-radius: 6px;
+            font-family: monospace;
+            color: #1565c0;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><span class="emoji">📮</span>puttr</h1>
+            <p>A Secure Data Posting Service</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="subtitle">
+            <strong>puttr</strong> is a lightweight web service that allows you to securely send and store data via HTTP PUT requests. Each request is authenticated with a time-limited token and stored with a unique timestamp and organizational structure.
+        </div>
+
+        <!-- Building Section -->
+        <section class="building-section">
+            <h2>Building</h2>
+            <p>This is a Rust project that uses Cargo. To build the application:</p>
+            
+            <h3>Debug Build</h3>
+            <pre><code>cargo build</code></pre>
+
+            <h3>Release Build (Optimized)</h3>
+            <pre><code>cargo build --release</code></pre>
+
+            <p><strong>Output locations:</strong></p>
+            <ul class="feature-list">
+                <li>Debug: <code>target/debug/puttr</code></li>
+                <li>Release: <code>target/release/puttr</code></li>
+            </ul>
+        </section>
+
+        <!-- Running Section -->
+        <section>
+            <h2>Running</h2>
+            <p>Start the web service with one of the following commands:</p>
+
+            <h3>Using Cargo</h3>
+            <pre><code>cargo run</code></pre>
+
+            <h3>Using the Compiled Binary</h3>
+            <pre><code>./target/release/puttr</code></pre>
+
+            <div class="highlight">
+                <strong>📍 Server Address:</strong> The service will start on <code>http://localhost:3000</code>
+            </div>
+        </section>
+
+        <!-- API Usage Section -->
+        <section>
+            <h2>API Usage</h2>
+            <p>The API consists of two main endpoints: one for requesting authentication tokens and one for posting data.</p>
+
+            <!-- Step 1: Request a Token -->
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Request an Authentication Token</h3>
+                    <p>Before you can send data to the <code>/data</code> endpoint, you need to obtain an authentication token. <strong>Tokens are valid for 5 minutes</strong> from the time of generation.</p>
+
+                    <div class="two-column">
+                        <div class="example-box">
+                            <h4>Using curl</h4>
+                            <pre><code>curl http://localhost:3000/token</code></pre>
+                        </div>
+                        <div class="example-box">
+                            <h4>Using httpie</h4>
+                            <pre><code>http GET http://localhost:3000/token</code></pre>
+                        </div>
+                    </div>
+
+                    <p><strong>Response:</strong> A base64-encoded token string</p>
+                    <div class="token-response">
+                        WW91IGZvdW5kIGEgdG9rZW4h
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Send Data -->
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Send Data with Authorization Token</h3>
+                    <p>Once you have a valid token, use it to send data to the <code>/data</code> endpoint via a PUT request. Include the token in the <code>Authorization: Token &lt;value&gt;</code> header.</p>
+
+                    <div class="two-column">
+                        <div class="example-box">
+                            <h4>Using curl</h4>
+                            <pre><code>curl -X PUT \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Authorization: Token WW91IGZvdW5kIGEgdG9rZW4h" \
+  -d "content=hello world" \
+  http://localhost:3000/data</code></pre>
+                        </div>
+                        <div class="example-box">
+                            <h4>Using httpie</h4>
+                            <pre><code>http PUT http://localhost:3000/data \
+  Authorization:"Token WW91IGZvdW5kIGEgdG9rZW4h" \
+  content="hello world"</code></pre>
+                        </div>
+                    </div>
+
+                    <p><strong>Response:</strong> <code>200 OK</code> with body <code>"success"</code></p>
+                </div>
+            </div>
+
+            <!-- Data Storage Info -->
+            <div class="highlight">
+                <strong>💾 Data Storage:</strong> Submitted content is stored in a hierarchical structure: <code>uploads/YYYY-MM/data-&lt;timestamp&gt;-&lt;token&gt;.txt</code>. Each request gets its own timestamped file, ensuring no data is ever overwritten.
+            </div>
+        </section>
+
+        <!-- Complete Example Section -->
+        <section>
+            <h2>Complete Example</h2>
+            <p>Here's a complete example that demonstrates the entire workflow in a single shell script:</p>
+
+            <pre><code>#!/bin/bash
+
+# Step 1: Get a token
+TOKEN=$(curl -s http://localhost:3000/token)
+echo "Token: $TOKEN"
+
+# Step 2: Send data with the token
+curl -X PUT \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Authorization: Token $TOKEN" \
+  -d "content=My important data" \
+  http://localhost:3000/data
+
+echo "Data submitted successfully!"</code></pre>
+
+            <p>Save this as <code>example.sh</code>, make it executable with <code>chmod +x example.sh</code>, and run it with <code>./example.sh</code></p>
+        </section>
+
+        <!-- Error Handling Section -->
+        <section>
+            <h2>Error Handling</h2>
+            <p>The API provides clear HTTP status codes to indicate various error conditions:</p>
+
+            <div class="error-box">
+                <strong>401 Unauthorized</strong><br>
+                Returned when the <code>Authorization</code> header is missing or the token is invalid/expired. Request a new token and retry.
+            </div>
+
+            <div class="error-box">
+                <strong>404 Not Found</strong><br>
+                Returned when the <code>content</code> field is empty or missing in your PUT request. Ensure you include the <code>content</code> parameter with non-empty data.
+            </div>
+
+            <div class="highlight">
+                <strong>⏰ Token Expiration:</strong> Tokens are valid for 5 minutes. If you receive a <code>401</code> error on a previously working token, it has likely expired. Request a new token and try again.
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section>
+            <h2>Key Features</h2>
+            <ul class="feature-list">
+                <li><strong>Time-Limited Tokens:</strong> All tokens expire after 5 minutes for security</li>
+                <li><strong>Automatic Cleanup:</strong> Expired tokens are automatically removed from storage</li>
+                <li><strong>Organized Storage:</strong> Files are organized by year-month with ISO8601 timestamps</li>
+                <li><strong>No Overwrites:</strong> Each request receives its own unique, timestamped filename</li>
+                <li><strong>Secure Authentication:</strong> All data submissions require valid token authentication</li>
+                <li><strong>Lightweight:</strong> Built in Rust with minimal dependencies</li>
+            </ul>
+        </section>
+
+        <!-- Build Information -->
+        <section class="building-section">
+            <h2>Requirements</h2>
+            <p>To build and run puttr, you need:</p>
+            <ul class="feature-list">
+                <li>Rust 1.92.0 or later (includes Cargo)</li>
+                <li>A Unix-like system (Linux, macOS, etc.)</li>
+                <li>Write permissions for the <code>uploads/</code> directory</li>
+            </ul>
+            <p style="margin-top: 25px;">
+                <strong>Installation:</strong> If you don't have Rust installed, visit <a href="https://rustup.rs/" style="color: #dc3545; text-decoration: none; font-weight: 600;">rustup.rs</a> for installation instructions.
+            </p>
+        </section>
+
+        <footer>
+            <p>📮 <strong>puttr</strong> - A silly little web service</p>
+            <p><a href="https://github.com/bradmontgomery/puttr" style="color: #dc3545; text-decoration: none;">View on GitHub</a></p>
+        </footer>
+    </div>
+</body>
+</html>
