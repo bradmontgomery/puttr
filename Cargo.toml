@@ -1,10 +1,11 @@
 [package]
 name = "puttr"
 version = "0.1.0"
+edition = "2021"
 authors = ["Brad Montgomery <brad@bradmontgomery.net>"]
 
 [dependencies]
-iron = "0.5.*"
-router = "0.5.*"
-mime = "0.2.3"
-params = "0.7.1"
+iron = "0.5"
+router = "0.5"
+mime = "0.3"
+params = "0.7"

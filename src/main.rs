@@ -1,12 +1,6 @@
-extern crate iron;
-extern crate params;
-#[macro_use] extern crate mime;
-extern crate router;
-
 use iron::prelude::*;
 use iron::status;
 use router::Router;
-use std::error::Error;
 use std::io::prelude::*;
 use std::fs::File;
 
@@ -23,11 +17,10 @@ fn main() {
 
 
 fn index(_request: &mut Request) -> IronResult<Response> {
-
     let mut response = Response::new();
 
     response.set_mut(status::Ok);
-    response.set_mut(mime!(Text/Html; Charset=Utf8));
+    response.set_mut("text/html; charset=utf-8".parse::<iron::mime::Mime>().unwrap());
     response.set_mut(r#"
         <!Doctype html>
         <html><head><title>puttr</title></head>
@@ -48,7 +41,6 @@ fn index(_request: &mut Request) -> IronResult<Response> {
 
 
 fn put_data(_request: &mut Request) -> IronResult<Response> {
-
     use params::{Params, Value};
 
     let map = _request.get_ref::<Params>().unwrap();
@@ -58,11 +50,11 @@ fn put_data(_request: &mut Request) -> IronResult<Response> {
             println!("PUT /data ({} bytes, {})", name.len(), name);
 
             let mut file = match File::create("data.txt") {
-                Err(why) => panic!("couldn't create data.txt: {}", why.description()),
+                Err(why) => panic!("couldn't create data.txt: {}", why),
                 Ok(file) => file,
             };
             match file.write_all(name.as_bytes()) {
-                Err(why) => panic!("couldn't write data: {}", why.description()),
+                Err(why) => panic!("couldn't write data: {}", why),
                 Ok(_) => println!("data written to file"),
             };
 
