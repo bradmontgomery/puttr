@@ -3,12 +3,23 @@ use iron::status;
 use router::Router;
 use std::io::prelude::*;
 use std::fs::File;
+use std::sync::RwLock;
+use std::collections::HashMap;
+use uuid::Uuid;
+use time::{OffsetDateTime, Duration};
+use base64::Engine;
+use lazy_static::lazy_static;
 
+lazy_static! {
+    static ref TOKEN_STORE: RwLock<HashMap<String, OffsetDateTime>> = 
+        RwLock::new(HashMap::new());
+}
 
 fn main() {
     let mut router = Router::new();
 
     router.get("/", index, "index");
+    router.get("/token", get_token, "token");
     router.put("/data", put_data, "data");
 
     println!("Running at http://localhost:3000");
@@ -37,6 +48,34 @@ fn index(_request: &mut Request) -> IronResult<Response> {
 
     println!("GET / 200");
     Ok(response)
+}
+
+
+fn get_token(_request: &mut Request) -> IronResult<Response> {
+    let token = generate_token();
+    let expiration = OffsetDateTime::now_utc() + Duration::minutes(5);
+
+    {
+        let mut store = TOKEN_STORE.write()
+            .expect("Failed to acquire write lock");
+        store.insert(token.clone(), expiration);
+        clean_expired_tokens(&mut store);
+    }
+
+    println!("GET /token 200 - Token generated");
+    Ok(Response::with((status::Ok, token)))
+}
+
+
+fn generate_token() -> String {
+    let uuid = Uuid::new_v4();
+    base64::engine::general_purpose::STANDARD.encode(uuid.as_bytes())
+}
+
+
+fn clean_expired_tokens(store: &mut HashMap<String, OffsetDateTime>) {
+    let now = OffsetDateTime::now_utc();
+    store.retain(|_token, expiration| *expiration > now);
 }
 
 
