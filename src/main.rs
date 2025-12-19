@@ -79,10 +79,28 @@ fn clean_expired_tokens(store: &mut HashMap<String, OffsetDateTime>) {
 }
 
 
-fn put_data(_request: &mut Request) -> IronResult<Response> {
+fn put_data(request: &mut Request) -> IronResult<Response> {
     use params::{Params, Value};
 
-    let map = _request.get_ref::<Params>().unwrap();
+    let token = extract_token_from_header(request);
+
+    match token {
+        None => {
+            println!("PUT /data 401 - Missing authorization token");
+            return Ok(Response::with(status::Unauthorized));
+        },
+        Some(token_value) => {
+            let store = TOKEN_STORE.read()
+                .expect("Failed to acquire read lock");
+            
+            if !store.contains_key(&token_value) {
+                println!("PUT /data 401 - Invalid or expired token");
+                return Ok(Response::with(status::Unauthorized));
+            }
+        }
+    }
+
+    let map = request.get_ref::<Params>().unwrap();
 
     match map.find(&["content"]) {
         Some(&Value::String(ref name)) if name.len() > 0 => {
@@ -101,4 +119,18 @@ fn put_data(_request: &mut Request) -> IronResult<Response> {
         },
         _ => Ok(Response::with(status::NotFound)),
     }
+}
+
+
+fn extract_token_from_header(request: &Request) -> Option<String> {
+    request.headers.get_raw("Authorization")
+        .and_then(|values| values.first())
+        .and_then(|value| {
+            let value_str = String::from_utf8(value.clone()).ok()?;
+            if value_str.starts_with("Token ") {
+                Some(value_str[6..].to_string())
+            } else {
+                None
+            }
+        })
 }
