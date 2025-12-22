@@ -389,22 +389,24 @@
                 <div class="step-number">2</div>
                 <div class="step-content">
                     <h3>Send Data with Authorization Token</h3>
-                    <p>Once you have a valid token, use it to send data to the <code>/data</code> endpoint via a PUT request. Include the token in the <code>Authorization: Token &lt;value&gt;</code> header.</p>
+                    <p>Once you have a valid token, use it to send data to the <code>/data</code> endpoint via a PUT request. Include the token in the <code>Authorization: Token &lt;value&gt;</code> header. The <code>Content-Type</code> header determines the file extension used to save your data.</p>
 
                     <div class="two-column">
                         <div class="example-box">
-                            <h4>Using curl</h4>
+                            <h4>Using curl with JSON</h4>
                             <pre><code>curl -X PUT \
-  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Content-Type: application/json" \
   -H "Authorization: Token WW91IGZvdW5kIGEgdG9rZW4h" \
-  -d "content=hello world" \
+  -d "content={\"key\": \"value\"}" \
   http://localhost:3000/data</code></pre>
                         </div>
                         <div class="example-box">
-                            <h4>Using httpie</h4>
-                            <pre><code>http PUT http://localhost:3000/data \
-  Authorization:"Token WW91IGZvdW5kIGEgdG9rZW4h" \
-  content="hello world"</code></pre>
+                            <h4>Using curl with Plain Text</h4>
+                            <pre><code>curl -X PUT \
+  -H "Content-Type: text/plain" \
+  -H "Authorization: Token WW91IGZvdW5kIGEgdG9rZW4h" \
+  -d "content=hello world" \
+  http://localhost:3000/data</code></pre>
                         </div>
                     </div>
 
@@ -414,7 +416,7 @@
 
             <!-- Data Storage Info -->
             <div class="highlight">
-                <strong>💾 Data Storage:</strong> Submitted content is stored in a hierarchical structure: <code>uploads/YYYY-MM/data-&lt;timestamp&gt;-&lt;token&gt;.txt</code>. Each request gets its own timestamped file, ensuring no data is ever overwritten.
+                <strong>💾 File Extensions:</strong> The file extension is automatically determined by the <code>Content-Type</code> header of your request. For example, use <code>Content-Type: application/json</code> to save as <code>.json</code> or <code>Content-Type: image/png</code> to save as <code>.png</code>. Data is stored in: <code>uploads/YYYY-MM/data-&lt;timestamp&gt;-&lt;token&gt;.&lt;ext&gt;</code>
             </div>
         </section>
 
@@ -461,10 +463,78 @@ echo "Data submitted successfully!"</code></pre>
             </div>
         </section>
 
+        <!-- Supported Content Types Section -->
+        <section>
+            <h2>Supported Content Types</h2>
+            <p>The following Content-Type headers are supported for automatic file extension mapping:</p>
+
+            <h3>Application Types</h3>
+            <ul class="feature-list">
+                <li><code>application/json</code> → <code>.json</code></li>
+                <li><code>application/xml</code> → <code>.xml</code></li>
+                <li><code>application/pdf</code> → <code>.pdf</code></li>
+                <li><code>application/zip</code> → <code>.zip</code></li>
+                <li><code>application/gzip</code> → <code>.gz</code></li>
+                <li><code>application/x-tar</code> → <code>.tar</code></li>
+                <li><code>application/x-rar-compressed</code> → <code>.rar</code></li>
+                <li><code>application/octet-stream</code> → <code>.bin</code></li>
+            </ul>
+
+            <h3>Text Types</h3>
+            <ul class="feature-list">
+                <li><code>text/plain</code> → <code>.txt</code></li>
+                <li><code>text/html</code> → <code>.html</code></li>
+                <li><code>text/css</code> → <code>.css</code></li>
+                <li><code>text/javascript</code> → <code>.js</code></li>
+                <li><code>text/csv</code> → <code>.csv</code></li>
+                <li><code>text/yaml</code> → <code>.yaml</code></li>
+                <li><code>text/markdown</code> → <code>.md</code></li>
+            </ul>
+
+            <h3>Image Types</h3>
+            <ul class="feature-list">
+                <li><code>image/png</code> → <code>.png</code></li>
+                <li><code>image/jpeg</code> → <code>.jpg</code></li>
+                <li><code>image/gif</code> → <code>.gif</code></li>
+                <li><code>image/webp</code> → <code>.webp</code></li>
+                <li><code>image/svg+xml</code> → <code>.svg</code></li>
+                <li><code>image/bmp</code> → <code>.bmp</code></li>
+                <li><code>image/tiff</code> → <code>.tiff</code></li>
+                <li><code>image/x-icon</code> → <code>.ico</code></li>
+            </ul>
+
+            <h3>Audio Types</h3>
+            <ul class="feature-list">
+                <li><code>audio/mpeg</code> → <code>.mp3</code></li>
+                <li><code>audio/wav</code> → <code>.wav</code></li>
+                <li><code>audio/webm</code> → <code>.webm</code></li>
+                <li><code>audio/flac</code> → <code>.flac</code></li>
+                <li><code>audio/ogg</code> → <code>.ogg</code></li>
+                <li><code>audio/aac</code> → <code>.aac</code></li>
+            </ul>
+
+            <h3>Video Types</h3>
+            <ul class="feature-list">
+                <li><code>video/mp4</code> → <code>.mp4</code></li>
+                <li><code>video/webm</code> → <code>.webm</code></li>
+                <li><code>video/mpeg</code> → <code>.mpeg</code></li>
+                <li><code>video/quicktime</code> → <code>.mov</code></li>
+                <li><code>video/x-msvideo</code> → <code>.avi</code></li>
+                <li><code>video/x-matroska</code> → <code>.mkv</code></li>
+                <li><code>video/x-flv</code> → <code>.flv</code></li>
+            </ul>
+
+            <div class="highlight">
+                <strong>📝 Default Extension:</strong> If you use an unsupported Content-Type, the default <code>.txt</code> extension will be used.
+            </div>
+        </section>
+
         <!-- Features Section -->
         <section>
             <h2>Key Features</h2>
             <ul class="feature-list">
+                <li><strong>Content-Type Based Extensions:</strong> File extensions are automatically determined by the Content-Type header</li>
+                <li><strong>Configurable Storage:</strong> Upload directory is configurable via puttr.toml</li>
                 <li><strong>Time-Limited Tokens:</strong> All tokens expire after 5 minutes for security</li>
                 <li><strong>Automatic Cleanup:</strong> Expired tokens are automatically removed from storage</li>
                 <li><strong>Organized Storage:</strong> Files are organized by year-month with ISO8601 timestamps</li>

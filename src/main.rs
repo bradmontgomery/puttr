@@ -10,10 +10,29 @@ use uuid::Uuid;
 use time::{OffsetDateTime, Duration};
 use base64::Engine;
 use lazy_static::lazy_static;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Config {
+    storage: StorageConfig,
+}
+
+#[derive(Deserialize)]
+struct StorageConfig {
+    upload_dir: String,
+}
 
 lazy_static! {
     static ref TOKEN_STORE: RwLock<HashMap<String, OffsetDateTime>> = 
         RwLock::new(HashMap::new());
+    static ref CONFIG: Config = load_config();
+}
+
+fn load_config() -> Config {
+    let config_str = std::fs::read_to_string("puttr.toml")
+        .expect("Failed to read puttr.toml configuration file");
+    toml::from_str(&config_str)
+        .expect("Failed to parse puttr.toml configuration file")
 }
 
 fn main() {
@@ -159,23 +178,25 @@ fn index(_request: &mut Request) -> IronResult<Response> {
 
                 <section class="step">
                     <h3>Step 2: Send Data with Your Token</h3>
-                    <p>Use your token to send data via a PUT request. Include it in the <code>Authorization: Token &lt;your-token&gt;</code> header:</p>
-                    <p><strong>Using curl:</strong></p>
+                    <p>Use your token to send data via a PUT request. Include it in the <code>Authorization: Token &lt;your-token&gt;</code> header. The <code>Content-Type</code> header determines the file extension.</p>
+                    <p><strong>Using curl (JSON):</strong></p>
                     <pre>curl -X PUT \
-  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Token YOUR_TOKEN_HERE" \
+  -d "content={\"key\": \"value\"}" \
+  http://localhost:3000/data</pre>
+                    <p><strong>Using curl (Plain Text):</strong></p>
+                    <pre>curl -X PUT \
+  -H "Content-Type: text/plain" \
   -H "Authorization: Token YOUR_TOKEN_HERE" \
   -d "content=hello world" \
   http://localhost:3000/data</pre>
-                    <p><strong>Using httpie:</strong></p>
-                    <pre>http PUT http://localhost:3000/data \
-  Authorization:"Token YOUR_TOKEN_HERE" \
-  content="hello world"</pre>
-                    <p>Replace <code>YOUR_TOKEN_HERE</code> with the token from Step 1, and <code>hello world</code> with your data.</p>
+                    <p>Replace <code>YOUR_TOKEN_HERE</code> with the token from Step 1, and update the <code>Content-Type</code> and content as needed.</p>
                 </section>
 
                 <section class="step">
                     <h3>Step 3: Done!</h3>
-                    <p>Your data has been stored securely in a timestamped file. Each upload gets its own file with a unique name combining the token and current timestamp.</p>
+                    <p>Your data has been stored securely in a timestamped file. The file extension is determined by the Content-Type header you sent. Each upload gets its own file with a unique name combining the token and current timestamp.</p>
                 </section>
 
                 <section>
@@ -184,19 +205,20 @@ fn index(_request: &mut Request) -> IronResult<Response> {
                         <li><strong>Token Validity:</strong> Tokens expire after 5 minutes. Request a new one if needed.</li>
                         <li><strong>Content Field:</strong> The <code>content</code> field is required and must not be empty.</li>
                         <li><strong>Authorization Required:</strong> All PUT requests to <code>/data</code> require a valid token.</li>
-                        <li><strong>Storage:</strong> Data is stored in <code>uploads/YYYY-MM/data-&lt;timestamp&gt;-&lt;token&gt;.txt</code></li>
+                        <li><strong>File Extensions:</strong> Files are saved with extensions based on the <code>Content-Type</code> header (e.g., .json, .xml, .txt).</li>
+                        <li><strong>Storage:</strong> Data is stored in <code>uploads/YYYY-MM/data-&lt;timestamp&gt;-&lt;token&gt;.&lt;ext&gt;</code></li>
                     </ul>
                 </section>
 
                 <section>
                     <h2>Full Example</h2>
-                    <p>Here's a complete example that retrieves a token and sends data in one script:</p>
+                    <p>Here's a complete example that retrieves a token and sends JSON data in one script:</p>
                     <pre>#!/bin/bash
 TOKEN=$(curl -s http://localhost:3000/token)
 curl -X PUT \
-  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Content-Type: application/json" \
   -H "Authorization: Token $TOKEN" \
-  -d "content=My important data" \
+  -d "content={\"message\": \"Hello from puttr\"}" \
   http://localhost:3000/data</pre>
                 </section>
 
@@ -263,13 +285,15 @@ fn put_data(request: &mut Request) -> IronResult<Response> {
         }
     };
 
+    let content_type = extract_content_type(request);
     let map = request.get_ref::<Params>().unwrap();
 
     match map.find(&["content"]) {
         Some(&Value::String(ref name)) if name.len() > 0 => {
             println!("PUT /data ({} bytes, {})", name.len(), name);
 
-            let file_path = generate_file_path(&token_value);
+            let file_extension = content_type_to_extension(&content_type);
+            let file_path = generate_file_path(&token_value, &file_extension);
             
             if let Some(parent) = file_path.parent() {
                 if let Err(why) = create_dir_all(parent) {
@@ -293,14 +317,14 @@ fn put_data(request: &mut Request) -> IronResult<Response> {
 }
 
 
-fn generate_file_path(token: &str) -> PathBuf {
+fn generate_file_path(token: &str, extension: &str) -> PathBuf {
     let now = OffsetDateTime::now_utc();
     let timestamp = now.format_iso8601_timestamp();
     let year_month = now.format_year_month();
     
     PathBuf::from(format!(
-        "uploads/{}/data-{}-{}.txt",
-        year_month, timestamp, token
+        "{}/{}/data-{}-{}.{}",
+        CONFIG.storage.upload_dir, year_month, timestamp, token, extension
     ))
 }
 
@@ -316,6 +340,78 @@ fn extract_token_from_header(request: &Request) -> Option<String> {
                 None
             }
         })
+}
+
+
+fn extract_content_type(request: &Request) -> String {
+    request.headers.get_raw("Content-Type")
+        .and_then(|values| values.first())
+        .and_then(|value| String::from_utf8(value.clone()).ok())
+        .unwrap_or_else(|| "text/plain".to_string())
+}
+
+
+fn content_type_to_extension(content_type: &str) -> String {
+    let ct = content_type.trim().to_lowercase();
+    let base_type = ct.split(';').next().unwrap_or(&ct).trim();
+
+    match base_type {
+        // Application types
+        "application/json" => "json",
+        "application/xml" => "xml",
+        "application/pdf" => "pdf",
+        "application/zip" => "zip",
+        "application/gzip" => "gz",
+        "application/x-gzip" => "gz",
+        "application/x-tar" => "tar",
+        "application/x-rar-compressed" => "rar",
+        "application/x-7z-compressed" => "7z",
+        "application/x-bzip2" => "bz2",
+        "application/octet-stream" => "bin",
+        "application/x-www-form-urlencoded" => "form",
+        
+        // Text types
+        "text/plain" => "txt",
+        "text/html" => "html",
+        "text/css" => "css",
+        "text/javascript" => "js",
+        "text/csv" => "csv",
+        "text/yaml" => "yaml",
+        "text/x-yaml" => "yaml",
+        "text/markdown" => "md",
+        "text/x-markdown" => "md",
+        
+        // Image types
+        "image/png" => "png",
+        "image/jpeg" => "jpg",
+        "image/jpg" => "jpg",
+        "image/gif" => "gif",
+        "image/webp" => "webp",
+        "image/svg+xml" => "svg",
+        "image/bmp" => "bmp",
+        "image/tiff" => "tiff",
+        "image/x-icon" => "ico",
+        
+        // Audio types
+        "audio/mpeg" => "mp3",
+        "audio/wav" => "wav",
+        "audio/webm" => "webm",
+        "audio/flac" => "flac",
+        "audio/ogg" => "ogg",
+        "audio/aac" => "aac",
+        
+        // Video types
+        "video/mp4" => "mp4",
+        "video/webm" => "webm",
+        "video/mpeg" => "mpeg",
+        "video/quicktime" => "mov",
+        "video/x-msvideo" => "avi",
+        "video/x-matroska" => "mkv",
+        "video/x-flv" => "flv",
+        
+        // Default to txt for unknown types
+        _ => "txt",
+    }.to_string()
 }
 
 
