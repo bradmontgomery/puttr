@@ -1,0 +1,5 @@
+# puttr configuration file
+
+[storage]
+# Directory where uploaded files will be stored
+upload_dir = "uploads"
