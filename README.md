@@ -1,4 +1,4 @@
-# 📮 puttr (v0.2.0)
+# 📮 puttr
 
 a silly little web service.
 
@@ -46,6 +46,14 @@ upload_dir = "uploads"
 ```
 
 This specifies the directory where uploaded files will be stored. The directory will be automatically created if it doesn't exist. Files are organized in a year-month subdirectory structure within this directory.
+
+**Security Note:** The `upload_dir` value is validated on startup:
+- Must be a relative path (no leading `/` or `~`)
+- Cannot contain `..` path traversal sequences
+- Cannot be empty
+- Cannot contain null characters
+
+This ensures that uploaded files are stored only within the intended upload directory and prevents directory traversal attacks.
 
 ## API Usage
 

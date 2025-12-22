@@ -31,8 +31,31 @@ lazy_static! {
 fn load_config() -> Config {
     let config_str = std::fs::read_to_string("puttr.toml")
         .expect("Failed to read puttr.toml configuration file");
-    toml::from_str(&config_str)
-        .expect("Failed to parse puttr.toml configuration file")
+    let config: Config = toml::from_str(&config_str)
+        .expect("Failed to parse puttr.toml configuration file");
+    
+    validate_config(&config);
+    config
+}
+
+fn validate_config(config: &Config) {
+    if config.storage.upload_dir.is_empty() {
+        panic!("Configuration error: upload_dir cannot be empty");
+    }
+    
+    let path = &config.storage.upload_dir;
+    
+    if path.starts_with('/') || path.starts_with('~') {
+        panic!("Configuration error: upload_dir must be a relative path, not an absolute path");
+    }
+    
+    if path.contains("..") {
+        panic!("Configuration error: upload_dir cannot contain '..' path traversal sequences");
+    }
+    
+    if path.contains('\0') {
+        panic!("Configuration error: upload_dir contains invalid null characters");
+    }
 }
 
 fn main() {
